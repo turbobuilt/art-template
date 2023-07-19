@@ -49,6 +49,7 @@
     "mocha": "^5.2.0",
     "node-noop": "^1.0.0",
     "prettier": "^1.14.2",
+    "sass": "^1.63.6",
     "webpack": "^3.0.0"
   },
   "license": "MIT"

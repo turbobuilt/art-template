@@ -11,7 +11,8 @@ const include = (filename, data, blocks, options) => {
     options = options.$extend({
         filename: options.resolveFilename(filename, options),
         bail: true,
-        source: null
+        source: null,
+        scssPath: options.scssPath
     });
     return compile(options)(data, blocks);
 };

@@ -1,6 +1,8 @@
 const Compiler = require('./compiler');
 const defaults = require('./defaults');
 const TemplateError = require('./error');
+const path = require("path")
+const fs = require("fs")
 
 const debugRender = (error, options) => {
     options.onerror(error, options);
@@ -60,6 +62,17 @@ const compile = (source, options = {}) => {
     if (!source) {
         try {
             source = options.loader(filename, options);
+            if (options.scssPath) {
+                var sass = require("sass");
+                try {
+                    let scssFilePath = options.scssPath + "/" + path.basename(filename).split(".").slice(0, -1).join(".") + ".scss";
+                    if (fs.existsSync(scssFilePath)) {
+                        source = '<style>' + sass.compile(scssFilePath).css.toString() + '</style>' + source;
+                    }
+                } catch (err) {
+                    console.error("error compiling sass", err);
+                }
+            }
             options.source = source;
         } catch (e) {
             const error = new TemplateError({
