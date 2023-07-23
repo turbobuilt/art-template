@@ -12,8 +12,12 @@ const include = (filename, data, blocks, options) => {
         filename: options.resolveFilename(filename, options),
         bail: true,
         source: null,
-        scssPath: options.scssPath
+        scssPath: options.scssPath,
+        parentOptions: options,
+        rootOptions: options.rootOptions ? options.rootOptions : options
     });
+    options = JSON.parse(JSON.stringify(options));
+    delete options.styles;
     return compile(options)(data, blocks);
 };
 

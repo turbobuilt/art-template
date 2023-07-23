@@ -1,5 +1,6 @@
 const esTokenizer = require('./es-tokenizer');
 const tplTokenizer = require('./tpl-tokenizer');
+const util = require('util')
 
 /** 传递给模板的数据引用 */
 const DATA = `$data`;
@@ -190,7 +191,8 @@ class Compiler {
             contextMap[name] = value;
             context.push({
                 name,
-                value
+                value,
+                options
             });
         }
     }
@@ -235,7 +237,15 @@ class Compiler {
 
         const esToken = this.getEsTokens(code);
         this.getVariables(esToken).forEach(name => this.importContext(name));
-
+        if (tplToken.script && tplToken.script.code && tplToken.script.code.match(/^block\('styles'/)) {
+            const code = `${OUT}+=${stringify(this.options.parentOptions.styles)}`;
+            this.scripts.push({
+                source: "",
+                tplToken: { type: tplTokenizer.TYPE_STRING, line: 0, start: 0 },
+                code
+            });
+            this.options.isTemplate = true;
+        }
         this.scripts.push({
             source,
             tplToken,
@@ -329,9 +339,15 @@ class Compiler {
         stacks.push(`${DATA}=${DATA}||{}`);
         stacks.push(`var ` + context.map(({ name, value }) => `${name}=${value}`).join(`,`));
 
+        let style = "";
+        if (!extendMode && this.options.styles) {
+            style = `${OUT}+='${this.options.styles.replace(/'/g, "\\'").replace(/\n/g, '\\n')}'`;
+        }
+
         if (options.compileDebug) {
             stacks.push(`try{`);
-
+            if(style)
+                stacks.push(style);
             scripts.forEach(script => {
                 if (script.tplToken.type === tplTokenizer.TYPE_EXPRESSION) {
                     stacks.push(
@@ -361,6 +377,8 @@ class Compiler {
 
             stacks.push(`}`);
         } else {
+            if(style)
+                stacks.push(style);
             scripts.forEach(script => {
                 mappings.push(mapping(script.code, script.tplToken));
                 stacks.push(trim(script.code));
@@ -371,7 +389,6 @@ class Compiler {
             stacks.push(`${OUT}=''`);
             stacks.push(`${INCLUDE}(${FROM},${DATA},${BLOCKS})`);
         }
-
         stacks.push(`return ${OUT}`);
         stacks.push(`}`);
 

@@ -46,6 +46,18 @@ const compile = (source, options = {}) => {
         options.filename = options.resolveFilename(options.filename, options);
     }
 
+    if (options.scssPath) {
+        var sass = require("sass");
+        try {
+            var scssFilePath = options.scssPath + "/" + path.basename(options.filename).split(".").slice(0, -1).join(".") + ".scss";
+            if (fs.existsSync(scssFilePath)) {
+                options.styles = '<style>' + sass.compile(scssFilePath).css.toString() + '</style>';
+            }
+        } catch (err) {
+            console.error("error compiling sass", err);
+        }
+    }
+
     const filename = options.filename;
     const cache = options.cache;
     const caches = options.caches;
@@ -62,17 +74,6 @@ const compile = (source, options = {}) => {
     if (!source) {
         try {
             source = options.loader(filename, options);
-            if (options.scssPath) {
-                var sass = require("sass");
-                try {
-                    let scssFilePath = options.scssPath + "/" + path.basename(filename).split(".").slice(0, -1).join(".") + ".scss";
-                    if (fs.existsSync(scssFilePath)) {
-                        source = '<style>' + sass.compile(scssFilePath).css.toString() + '</style>' + source;
-                    }
-                } catch (err) {
-                    console.error("error compiling sass", err);
-                }
-            }
             options.source = source;
         } catch (e) {
             const error = new TemplateError({
